@@ -35,6 +35,7 @@ SKILLS_TO_SYNC = [
     "skillforge",
     "summarize-skill",
     "target-skill",
+    "task-split-skill",
     "ubuntu-chinese-ime-skill",
     "ubuntu-chromium-setup-skill",
 ]
