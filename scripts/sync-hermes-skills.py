@@ -216,7 +216,7 @@ def install_honesty(dry_run: bool = False) -> dict:
     # 检测平台：优先检测 cwd 是否在 openclaw workspace 下
     import os as _os
     openclaw_soul = get_openclaw_workspace_soul()
-    hermes_soul = Path(HOME_BASE) / ".hermes" / "profiles" / "baijie" / "SOUL.md"
+    hermes_soul = Path(HOME_BASE).parent / "SOUL.md"
 
     # 优先用 cwd 检测到的（如果在 openclaw workspace 下）
     if openclaw_soul:
