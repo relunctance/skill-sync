@@ -17,25 +17,14 @@ import sys
 from pathlib import Path
 
 # 跨平台路径策略：
-# - WSL 下 home 展开为 ~/.hermes/profiles/xxx/home/，需要用 /home/<user> 作为 .openclaw/.hermes 等的基准
-# - 标准 Linux 下 home 就是标准 home，不需要特殊处理
-import platform, os as _os
-
-def _get_home() -> str:
-    """获取实际用户 home 目录，WSL Hermes profile 环境下返回 /home/<user>"""
-    if platform.system() == "Linux" and _os.path.exists("/proc/version"):
-        with open("/proc/version") as f:
-            if "WSL" in f.read():
-                # WSL 下：Path.home() 指向 hermes profile 目录，需要回到标准 home
-                user = _os.environ.get("USER", "root")
-                return f"/home/{user}"
-    return str(Path.home())
-
-HOME_BASE = _get_home()
+# - WSL Hermes profile 下 Path.home() 指向 ~/.hermes/profiles/<profile>/home/
+# - 直接用 Path.home() 让系统自动处理 WSL profile 情况
+HOME_BASE = str(Path.home())
 
 # relunctance 的 repos 统一放在 <home>/repos/
 REPOS_DIR = Path(HOME_BASE) / "repos"
 # hermes skills 统一放在 <home>/.hermes/skills/
+# 在 Hermes profile 环境下，Path.home() 已经指向 profile home，所以直接用
 HERMES_SKILLS = Path(HOME_BASE) / ".hermes" / "skills"
 
 # relunctance 管理的 skill 仓库列表（从 repos 扫描）
