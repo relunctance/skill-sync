@@ -16,10 +16,27 @@ import subprocess
 import sys
 from pathlib import Path
 
-# 注意：WSL 下 ~ 展开为 /home/gql/.hermes/profiles/baijie/home/
-# 因此使用绝对路径，避免 Path.home() 错误展开
-HERMES_SKILLS = Path("/home/gql/.hermes/skills")
-REPOS_DIR = Path("/home/gql/.hermes/profiles/baijie/home/repos")
+# 跨平台路径策略：
+# - WSL 下 home 展开为 ~/.hermes/profiles/xxx/home/，需要用 /home/<user> 作为 .openclaw/.hermes 等的基准
+# - 标准 Linux 下 home 就是标准 home，不需要特殊处理
+import platform, os as _os
+
+def _get_home() -> str:
+    """获取实际用户 home 目录，WSL Hermes profile 环境下返回 /home/<user>"""
+    if platform.system() == "Linux" and _os.path.exists("/proc/version"):
+        with open("/proc/version") as f:
+            if "WSL" in f.read():
+                # WSL 下：Path.home() 指向 hermes profile 目录，需要回到标准 home
+                user = _os.environ.get("USER", "root")
+                return f"/home/{user}"
+    return str(Path.home())
+
+HOME_BASE = _get_home()
+
+# relunctance 的 repos 统一放在 <home>/repos/
+REPOS_DIR = Path(HOME_BASE) / "repos"
+# hermes skills 统一放在 <home>/.hermes/skills/
+HERMES_SKILLS = Path(HOME_BASE) / ".hermes" / "skills"
 
 # relunctance 管理的 skill 仓库列表（从 repos 扫描）
 SKILLS_TO_SYNC = [
@@ -174,8 +191,8 @@ def get_openclaw_workspace_soul() -> Path | None:
     import os as _os
 
     cwd = Path.cwd()
-    # WSL 下 ~/.openclaw/ 的实际路径
-    openclaw_base = Path("/home/gql/.openclaw")
+    # WSL Hermes profile 环境下，HOME_BASE 是 /home/<user>
+    openclaw_base = Path(HOME_BASE) / ".openclaw"
 
     # 向上遍历目录，查找 SOUL.md
     current = cwd.resolve()
@@ -210,7 +227,7 @@ def install_honesty(dry_run: bool = False) -> dict:
     # 检测平台：优先检测 cwd 是否在 openclaw workspace 下
     import os as _os
     openclaw_soul = get_openclaw_workspace_soul()
-    hermes_soul = Path("/home/gql/.hermes/profiles/baijie/SOUL.md")
+    hermes_soul = Path(HOME_BASE) / ".hermes" / "profiles" / "baijie" / "SOUL.md"
 
     # 优先用 cwd 检测到的（如果在 openclaw workspace 下）
     if openclaw_soul:
